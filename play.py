@@ -1,5 +1,5 @@
 # for snake(snaky)
-import snaky as game
+import snake as game
 import cv2
 
 # for tensor
@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 import random
 from collections import deque
+
 
 # Based on NIPS 2013
 class DQN:
@@ -16,38 +17,40 @@ class DQN:
         # episode - one round
         self.epoch = 0
         self.episode = 0
-        self.observe = 500000
+        self.observe = 500000 # 50만개의 obs sample을 저장
         # discount factor
-        self.discft = DISCFT
+        self.discft = DISCFT  # lambda
+
         # FLAG
         # 0 - train
         # 1 - play
         self.flag = FLAG
-        self.epsilon = INIT_EPSILON
-        self.finep = FIN_EPSILON
-        self.REPLAYMEM = REPLAY_MEMORY
-        self.batchsize = BATCH_SIZE
-        self.actions = ACTIONS
-        self.repmem = deque()
+        self.epsilon = INIT_EPSILON      # 첫 시작 입실론
+        self.finep = FIN_EPSILON         # 마지막 입실론
+        self.REPLAYMEM = REPLAY_MEMORY   # 리플레이 메모리
+        self.batchsize = BATCH_SIZE      # 배치 사이즈
+        self.actions = ACTIONS           # 액션
+        self.repmem = deque()            # 디큐
+
         # Init weight and bias
-        self.w1 = tf.Variable(tf.truncated_normal([8, 8, 4, 32], stddev = 0.01))
-        self.b1 = tf.Variable(tf.constant(0.01, shape = [32]))
+        self.w1 = tf.Variable(tf.truncated_normal([8, 8, 4, 32], stddev=0.01))
+        self.b1 = tf.Variable(tf.constant(0.01, shape=[32]))
 
         self.w2 = tf.Variable(tf.truncated_normal([4, 4, 32, 64], stddev=0.01))
-        self.b2 = tf.Variable(tf.constant(0.01, shape = [64]))
+        self.b2 = tf.Variable(tf.constant(0.01, shape=[64]))
 
-        self.w3 = tf.Variable(tf.truncated_normal([3, 3, 64, 64], stddev = 0.01))
-        self.b3 = tf.Variable(tf.constant(0.01, shape = [64]))
+        self.w3 = tf.Variable(tf.truncated_normal([3, 3, 64, 64], stddev=0.01))
+        self.b3 = tf.Variable(tf.constant(0.01, shape=[64]))
 
-        self.wfc = tf.Variable(tf.truncated_normal([2304, 512], stddev = 0.01))
-        self.bfc = tf.Variable(tf.constant(0.01, shape = [512]))
+        self.wfc = tf.Variable(tf.truncated_normal([2304, 512], stddev=0.01))
+        self.bfc = tf.Variable(tf.constant(0.01, shape=[512]))
 
-        self.wto = tf.Variable(tf.truncated_normal([512, self.actions], stddev = 0.01))
-        self.bto = tf.Variable(tf.constant(0.01, shape = [self.actions]))
+        self.wto = tf.Variable(tf.truncated_normal([512, self.actions], stddev=0.01))
+        self.bto = tf.Variable(tf.constant(0.01, shape=[self.actions]))
 
         self.initConvNet()
         self.initNN()
-    
+
     def initConvNet(self):
         # input layer
         self.input = tf.placeholder("float", [None, 84, 84, 4])
@@ -57,19 +60,19 @@ class DQN:
         # 84 x 84 x 4
         # 8 x 8 x 4 with 32 Filters
         # Stride 4 -> Output 21 x 21 x 32 -> max_pool 11 x 11 x 32
-        tf.nn.conv2d(self.input, self.w1, strides = [1, 4, 4, 1], padding = "SAME")
-        conv1 = tf.nn.relu(tf.nn.conv2d(self.input, self.w1, strides = [1, 4, 4, 1], padding = "SAME") + self.b1)
-        pool = tf.nn.max_pool(conv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
+        tf.nn.conv2d(self.input, self.w1, strides=[1, 4, 4, 1], padding="SAME")
+        conv1 = tf.nn.relu(tf.nn.conv2d(self.input, self.w1, strides=[1, 4, 4, 1], padding="SAME") + self.b1)
+        pool = tf.nn.max_pool(conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
 
         # 11 x 11 x 32
         # 4 x 4 x 32 with 64 Filters
         # Stride 2 -> Output 6 x 6 x 64
-        conv2 = tf.nn.relu(tf.nn.conv2d(pool, self.w2, strides = [1, 2, 2, 1], padding = "SAME") + self.b2)
+        conv2 = tf.nn.relu(tf.nn.conv2d(pool, self.w2, strides=[1, 2, 2, 1], padding="SAME") + self.b2)
 
         # 6 x 6 x 64
         # 3 x 3 x 64 with 64 Filters
         # Stride 1 -> Output 6 x 6 x 64
-        conv3 = tf.nn.relu(tf.nn.conv2d(conv2, self.w3, strides = [1, 1, 1, 1], padding = "SAME") + self.b3)
+        conv3 = tf.nn.relu(tf.nn.conv2d(conv2, self.w3, strides=[1, 1, 1, 1], padding="SAME") + self.b3)
 
         # 6 x 6 x 64 = 2304
         conv3_to_reshaped = tf.reshape(conv3, [-1, 2304])
@@ -83,11 +86,11 @@ class DQN:
 
     def initNN(self):
         self.a = tf.placeholder("float", [None, self.actions])
-        self.y = tf.placeholder("float", [None]) 
-        out_action = tf.reduce_sum(tf.multiply(self.output, self.a), reduction_indices = 1)
+        self.y = tf.placeholder("float", [None])
+        out_action = tf.reduce_sum(tf.multiply(self.output, self.a), reduction_indices=1)
         self.cost = tf.reduce_mean(tf.square(self.y - out_action))
         self.optimize = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
-        
+
         self.saver = tf.train.Saver()
         self.session = tf.InteractiveSession()
         self.session.run(tf.initialize_all_variables())
@@ -95,20 +98,20 @@ class DQN:
         # For fresh start, comment below 2 lines
         if checkpoint and checkpoint.model_checkpoint_path:
             self.saver.restore(self.session, checkpoint.model_checkpoint_path)
-    
+
     def addReplay(self, s_t1, action, reward, done):
-        tmp = np.append(self.s_t[:,:,1:], s_t1, axis = 2)
-        self.repmem.append((self.s_t, action, reward, tmp, done))
+        tmp = np.append(self.s_t[:, :, 1:], s_t1, axis=2)
+        self.repmem.append((self.s_t, action, reward, tmp, done))  # deque 자료형에 오른쪽으로 추가
         if len(self.repmem) > self.REPLAYMEM:
-            self.repmem.popleft()
+            self.repmem.popleft() # MAX길이보다 긴 경우에는 가장 마지막에 저장했던 자료를 삭제한다.
 
         self.s_t = tmp
         self.epoch += 1
-        
+
         return self.epoch, np.max(self.qv)
-        
+
     def getAction(self):
-        Q_val = self.output.eval(feed_dict={self.input : [self.s_t]})[0]
+        Q_val = self.output.eval(feed_dict={self.input: [self.s_t]})[0]
         # for print
         self.qv = Q_val
         # action array
@@ -128,13 +131,14 @@ class DQN:
     def initState(self, state):
         self.s_t = np.stack((state, state, state, state), axis=2)
 
+
 class agent:
     def screen_handle(self, screen):
         procs_screen = cv2.cvtColor(cv2.resize(screen, (84, 84)), cv2.COLOR_BGR2GRAY)
         dummy, bin_screen = cv2.threshold(procs_screen, 1, 255, cv2.THRESH_BINARY)
         bin_screen = np.reshape(bin_screen, (84, 84, 1))
         return bin_screen
-        
+
     def run(self):
         # initialize
         # discount factor 0.99
@@ -153,13 +157,15 @@ class agent:
             # for Summary
             if done == True:
                 sc, ep = g.retScore()
-                print(ts,",",qv,",",ep, ",", sc)
+                print(ts, ",", qv, ",", ep, ",", sc)
             else:
-                print(ts,",",qv,",,")
+                print(ts, ",", qv, ",,")
+
 
 def main():
     run_agent = agent()
     run_agent.run()
+
 
 if __name__ == '__main__':
     main()
