@@ -1,5 +1,5 @@
-# for snake(snaky)
-import snaky as game
+# for snake(snake)
+import snake as game
 import cv2
 
 # for tensor
@@ -12,11 +12,11 @@ from collections import deque
 class DQN:
     def __init__(self, DISCFT, FLAG, INIT_EPSILON, FIN_EPSILON, REPLAY_MEMORY, BATCH_SIZE, ACTIONS):
         # Initialize Variables
-        # epoch - frame
-        # episode - one round
+        # epoch = frame을 의미
+        # episode = 게임 한판
         self.epoch = 0
         self.episode = 0
-        self.observe = 10000
+        self.observe = 10000 # DQN 논문은 10만을 설정 했었음.
         # discount factor
         self.discft = DISCFT
         # FLAG
@@ -57,7 +57,7 @@ class DQN:
         # 84 x 84 x 4
         # 8 x 8 x 4 with 32 Filters
         # Stride 4 -> Output 21 x 21 x 32 -> max_pool 11 x 11 x 32
-        tf.nn.conv2d(self.input, self.w1, strides = [1, 4, 4, 1], padding = "SAME")
+        # tf.nn.conv2d(self.input, self.w1, strides = [1, 4, 4, 1], padding = "SAME")
         conv1 = tf.nn.relu(tf.nn.conv2d(self.input, self.w1, strides = [1, 4, 4, 1], padding = "SAME") + self.b1)
         pool = tf.nn.max_pool(conv1, ksize = [1, 2, 2, 1], strides = [1, 2, 2, 1], padding = "SAME")
 
@@ -79,7 +79,7 @@ class DQN:
 
         # output(Q) layer
         # Matrix (1, 512) * (512, ACTIONS) -> (1, ACTIONS)
-        self.output = tf.matmul(fullyconnected, self.wto) + self.bto
+        self.output = tf.matmul(fullyconnected, self.wto) + self.bto # Q_pred
 
     def initNN(self):
         self.a = tf.placeholder("float", [None, self.actions])
@@ -98,16 +98,21 @@ class DQN:
     
     def train(self):
         # DQN
-        minibatch = random.sample(self.repmem, self.batchsize)
+        minibatch = random.sample(self.repmem, self.batchsize) # batchsize = 32
         s_batch = [data[0] for data in minibatch]
         a_batch = [data[1] for data in minibatch]
         r_batch = [data[2] for data in minibatch]
         s_t1_batch = [data[3] for data in minibatch]
 
-        y_batch = []
-        Q_batch = self.output.eval(feed_dict={self.input : s_t1_batch})
+        y_batch = [] # Q_pred 값을 저장할 장소
+        Q_batch = self.output.eval(feed_dict={self.input : s_t1_batch}) # NN 에서 Q값을 계산한다.
+
         for i in range(0,self.batchsize):
             done = minibatch[i][4]
+
+            # 만약, Terminal State에 도착 했다면, y_batch 에는 reward만 주고 끝낸다
+            # 끝이 아니라면, Reward + gamma * max(Q) => y_batch
+
             if done:
                 y_batch.append(r_batch[i])
             else:
@@ -121,8 +126,12 @@ class DQN:
     def addReplay(self, s_t1, action, reward, done):
         tmp = np.append(self.s_t[:,:,1:], s_t1, axis = 2)
         self.repmem.append((self.s_t, action, reward, tmp, done))
+
+        # 미리 지정한 10,000개의 epoch를 넘어가면, 가장 마지막 epoch를 memory에서 삭제한다.
         if len(self.repmem) > self.REPLAYMEM:
             self.repmem.popleft()
+
+        # replay memory에 10,000개의 epoch가 쌓이면 학습을 시작한다.
         if self.epoch > self.observe:
             self.train()
 
