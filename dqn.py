@@ -1,8 +1,7 @@
 import tensorflow as tf
-import random
 import numpy as np
-
-
+from collections import deque
+import cv2
 # self.observe = 1000  # DQN 논문은 10만을 설정 했었음.
 
 class DQN:
@@ -16,9 +15,11 @@ class DQN:
         self.episode = 0
         # discount factor
         self.discft = 0.999
-        self.epsilon = 1.0
 
-        self.finep = 0
+
+        self.replay_buffer = deque()
+        self.REPLAYMEM = 1000 # 1,000개의 게임까지 버퍼에 저장 되도록 함.
+
         self.net_name = name
 
         self._bulid_ConvNet()
@@ -75,28 +76,32 @@ class DQN:
             self._train = tf.train.AdamOptimizer(1e-6).minimize(self.cost)
 
 
-
-    def predict(self, state):
-        Q_batch = self._Qpred.eval(feed_dict={self.input: state})  # NN 에서 Q값을 계산한다.
-
-        return Q_batch
-
-    def update(self, x_stack, y_stack):
-        self.session.run
-
-
-    def getAction(self):
-        Q_val = self._Qpred.eval(feed_dict={self.input: [self.s_t]})[0]
+    def predict(self, s_0):
+        Q_val = self.session.run(self._Qpred, feed_dict = {self.input: s_0})
         # for print
         self.qv = Q_val
 
-        # action array
-        action = np.zeros(self.action_size)
-
-        idx = np.argmax(Q_val)
-        action[idx] = 1
-
-        return action
+        return Q_val
 
     def initState(self, state):
         self.s_t = np.stack((state, state, state, state), axis=2)
+
+    def update(self, x_stack, y_stack):
+        return self.session.run([self.cost, self._train], feed_dict={ self.input: x_stack, self._Y: y_stack})
+
+    def addReplay(self, s_t1, action, reward, done):
+        tmp = np.append(self.s_t[:, :, 1:], s_t1, axis=2)
+        # tmp:
+        # (84, 84, 4) 에서 (84, 84, 3) 만 가져온 다음 마지막 자리에 추가 --> 다시 (84, 84, 4)로 만든다.
+
+        self.replay_buffer.append((self.s_t, action, reward, tmp, done))
+        # 버퍼에 위 내용들을 저장한다.
+
+        # 미리 지정한 self.REPLAYMEM 개의 epoch를 넘어가면, 가장 오래된 epoch를 self.replay_buffer 에서 삭제한다.
+        if len(self.replay_buffer) > self.REPLAYMEM:
+            self.replay_buffer.popleft()
+
+        self.s_t = tmp  # 현재 state를 업데이트 한다.
+        self.epoch += 1 # 에폭 수 늘이기
+
+        return self.epoch

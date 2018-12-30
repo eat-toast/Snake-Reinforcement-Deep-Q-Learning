@@ -38,7 +38,7 @@ pygame.display.set_caption('Snake') # 디스플레이에 Snake 라고 나오도�
 episode = 0
 
 
-class gameState:
+class Snake:
     def __init__(self):
         global FPSCLOCK, DISPLAYSURF, BASICFONT, episode
         episode = episode + 1
@@ -138,7 +138,7 @@ class gameState:
         # UP, DOWN, LEFT, RIGHT 방향에 맞게 새로운 머리(newHead)에 뱀을 추가를 한다.
 
         self.wormCoords.insert(0, self.newHead) #추가
-        DISPLAYSURF.fill(BGCOLOR) #배경색은 검은색으로 설정
+        DISPLAYSURF.fill(BGCOLOR) # 배경색은 검은색으로 설정
         # self.drawGrid()
         self.drawWorm(self.wormCoords)
         self.drawApple(self.apple)

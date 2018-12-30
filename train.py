@@ -1,5 +1,6 @@
 # for snake(snake)
 import snake as game
+from dqn import DQN
 import cv2
 
 # for tensor
@@ -176,16 +177,16 @@ class agent:
         # initialize
         # discount factor 0.99
         ag = DQN(0.99, 0, 1, 0.001, 50000, 32, 4)
-        g = game.gameState()
-        a_0 = np.array([1, 0, 0, 0])
-        s_0, r_0, d = g.frameStep(a_0)
-        s_0 = cv2.cvtColor(cv2.resize(s_0, (84, 84)), cv2.COLOR_BGR2GRAY)
-        _, s_0 = cv2.threshold(s_0, 1, 255, cv2.THRESH_BINARY)
+        g = game.Snake()
+        a_0 = np.array([1, 0, 0, 0]) # 상, 하, 좌, 우
+        s_0, r_0, d = g.frameStep(a_0) # 200 200 3
+        s_0 = cv2.cvtColor(cv2.resize(s_0, (84, 84)), cv2.COLOR_BGR2GRAY) # 84 84
+        _, s_0 = cv2.threshold(s_0, 1, 255, cv2.THRESH_BINARY) # 84 84
         ag.initState(s_0)
         while True:
             a = ag.getAction()
-            s_t1, r, done = g.frameStep(a)
-            s_t1 = self.screen_handle(s_t1)
+            s_t1, r, done = g.frameStep(a) # 200 200 3
+            s_t1 = self.screen_handle(s_t1) # 84 84 1
             ts, qv = ag.addReplay(s_t1, a, r, done)
             if done == True:
                 sc, ep = g.retScore()
