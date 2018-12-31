@@ -70,7 +70,7 @@ for episode in range(max_episodes):
 
     #state = env.reset()
     env = game.Snake()
-    a_0 = np.array([1, 0, 0, 0])  # 상, 하, 좌, 우
+    a_0 = np.array([1, 0, 0, 0])  # 방향 확인하기
     s_0, r_0, d = env.frameStep(a_0)
     s_0 = cv2.cvtColor(cv2.resize(s_0, (84, 84)), cv2.COLOR_BGR2GRAY)
     _, s_0 = cv2.threshold(s_0, 1, 255, cv2.THRESH_BINARY)
