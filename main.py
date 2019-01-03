@@ -1,7 +1,11 @@
+# 후버 로스 적용하기
+# target Update 주기 C 논문 읽고 파악하기
+
 from dqn import DQN
 import cv2
 import snake as game
 import random
+
 # for tensor
 import numpy as np
 import tensorflow as tf
