@@ -1,3 +1,5 @@
+# 사과 정보가 State 에 포함 되는지 확인
+
 import random, pygame, sys
 from pygame.locals import *
 
@@ -42,13 +44,13 @@ class Snake:
     def __init__(self):
         global FPSCLOCK, DISPLAYSURF, BASICFONT, episode
         episode = episode + 1
-        self.startx = random.randint(3, 4)
-        self.starty = random.randint(3, 4)
+        self.startx = random.randint(3, 4) # 시작 지점을 랜덤하게.
+        self.starty = random.randint(3, 4) # 시작 지점을 랜덤하게.
         self.wormCoords = [{'x': self.startx, 'y': self.starty},
                            {'x': self.startx - 1, 'y': self.starty},
-                           {'x': self.startx - 2, 'y': self.starty}]
-        self.direction = RIGHT
-        self.totalscore = 0
+                           {'x': self.startx - 2, 'y': self.starty}] # 시작 뱀의 길이는 3 이다. 머리로 부터 x 축으로 길게 늘어져 있는 모습
+        self.direction = RIGHT # 시작 뱀의 방향은 오른쪽!
+        self.totalscore = 0 # 점수는 0 점
 
         # Start the apple in a random place.
         self.apple = self.getRandomLocation(self.wormCoords)
@@ -80,7 +82,11 @@ class Snake:
             self.direction = LEFT
         elif (action[3] == 1) and self.direction != LEFT:
             self.direction = RIGHT
+
         # 물리적으로 가능한 방향인지 체크!
+
+
+
         # 1. action 이 UP 인데 기존 방향이 DOWN 이면 불가능
         # 2. action 이 DOWN 인데 기존 방향이 UP 이면 불가능
         # 3. action 이 LEFT 인데 기존 방향이 RIGHT 이면 불가능

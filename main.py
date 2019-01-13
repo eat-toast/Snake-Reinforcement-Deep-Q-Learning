@@ -1,9 +1,9 @@
 # 후버 로스 적용하기
 # target Update 주기 C 논문 읽고 파악하기
 
-from dqn import DQN
+from DQN.dqn import DQN
 import cv2
-import snake as game
+import DQN.snake as game
 import random
 
 # for tensor
@@ -12,7 +12,7 @@ import tensorflow as tf
 import pygame
 
 # hyperparameter
-dis = 0.9
+dis = 0.999
 
 def get_copy_var_ops(*, dest_scope_name="target", src_scope_name="main"):
     op_holder = []
